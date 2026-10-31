@@ -65,6 +65,7 @@ with filter_col:
         "Risk tier", ["Critical", "Elevated", "Safe"],
         default=["Critical", "Elevated", "Safe"],
         help="Limit the table to one or more operational risk tiers.",
+        key="overview_tier_filter",
     )
 with sort_col:
     sort_by = st.selectbox(
@@ -191,7 +192,7 @@ with brief_col:
             unsafe_allow_html=True,
         )
         st.markdown(
-            '<div class="glass-note" style="margin-top:24px">'
+            '<div class="glass-note ops-recommendation">'
             '<b style="color:#0F172A">Recommended next action</b><br>'
             'Open Fleet Analysis to inspect the nearest critical conjunction in its '
             '3D orbital context, then review its CDM history before making a manoeuvre decision.'
@@ -222,8 +223,26 @@ st.markdown(
     .ops-brief-row {display:flex;justify-content:space-between;gap:12px;padding:12px 0;
         border-bottom:1px solid #CBD5E1;font-size:12px}
     .ops-brief-row span {color:#475569}.ops-brief-row strong {color:#0F172A;text-align:right}
+    .ops-recommendation {margin:16px auto;}
+    .st-key-overview_next_page button > div > span {
+        flex-direction:row-reverse!important;
+    }
     .table-page-status {height:40px;display:flex;align-items:center;justify-content:center;
         color:#475569;font-size:12px;font-weight:700}
+    .st-key-overview_tier_filter [data-tag][aria-label="Critical"] {
+        background:#FEE2E2!important;border:1px solid #EF4444!important;
+        color:#B91C1C!important;
+    }
+    .st-key-overview_tier_filter [data-tag][aria-label="Elevated"] {
+        background:#FEF3C7!important;border:1px solid #F59E0B!important;
+        color:#92400E!important;
+    }
+    .st-key-overview_tier_filter [data-tag][aria-label="Safe"] {
+        background:#D1FAE5!important;border:1px solid #10B981!important;
+        color:#047857!important;
+    }
+    .st-key-overview_tier_filter [data-tag] > span,
+    .st-key-overview_tier_filter [data-tag] > button {color:inherit!important;}
     </style>""",
     unsafe_allow_html=True,
 )

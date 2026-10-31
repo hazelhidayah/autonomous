@@ -24,6 +24,27 @@ page_header(
     "Resolved conjunction history with out-of-fold model predictions for every event.",
     "archive",
 )
+st.markdown(
+    """<style>
+    .st-key-archive_tier_filter [data-tag][aria-label="[C] Critical"] {
+        background:#FEE2E2!important;border:1px solid #EF4444!important;
+        color:#B91C1C!important;
+    }
+    .st-key-archive_tier_filter [data-tag][aria-label="[E] Elevated"] {
+        background:#FEF3C7!important;border:1px solid #F59E0B!important;
+        color:#92400E!important;
+    }
+    .st-key-archive_tier_filter [data-tag][aria-label="[S] Safe"] {
+        background:#D1FAE5!important;border:1px solid #10B981!important;
+        color:#047857!important;
+    }
+    .st-key-archive_tier_filter [data-tag] > span,
+    .st-key-archive_tier_filter [data-tag] > button {
+        color:inherit!important;
+    }
+    </style>""",
+    unsafe_allow_html=True,
+)
 
 stats = query(
     """SELECT count(*) rows, count(DISTINCT event_id) events
@@ -39,7 +60,10 @@ k[3].metric("Satellites covered", ev["mission_id"].nunique())
 
 f1, f2, f3 = st.columns(3)
 with f1:
-    tiers = st.multiselect("Tier", TIER_ORDER, default=TIER_ORDER, format_func=tier_chip)
+    tiers = st.multiselect(
+        "Tier", TIER_ORDER, default=TIER_ORDER, format_func=tier_chip,
+        key="archive_tier_filter",
+    )
 with f2:
     sats = st.multiselect("Satellite", sorted(ev["mission_id"].unique()),
                           format_func=sat_label, placeholder="All satellites")

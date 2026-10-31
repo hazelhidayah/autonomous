@@ -294,13 +294,13 @@ def style_tiers(df: pd.DataFrame, col="tier"):
 def base_layout(height=420):
     return dict(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family='system-ui, -apple-system, "Segoe UI", sans-serif', size=12,
+        font=dict(family='"Proxima Nova", "Avenir Next", "Segoe UI", sans-serif', size=12,
                   color=INK_2),
         margin=dict(l=55, r=15, t=10, b=45), height=height,
         legend=dict(orientation="h", y=-0.18),
         hoverlabel=dict(bgcolor=SURFACE_2, bordercolor=BORDER,
                         font=dict(color=INK, size=12,
-                                  family='system-ui, -apple-system, "Segoe UI", sans-serif')),
+                                  family='"Proxima Nova", "Avenir Next", "Segoe UI", sans-serif')),
     )
 
 
@@ -310,6 +310,16 @@ def inject_css():
     st.markdown(
         f"""<style>
         :root {{ color-scheme: light; }}
+        html, body, .stApp,
+        .stApp button, .stApp input, .stApp textarea, .stApp select {{
+            font-family: "Proxima Nova", "Avenir Next", "Segoe UI", sans-serif !important;
+        }}
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+        .stApp [data-testid="stMarkdownContainer"],
+        .stApp [data-testid="stMarkdownContainer"] *:not([role="img"]),
+        .stApp [data-testid="stMetric"] * {{
+            font-family: "Proxima Nova", "Avenir Next", "Segoe UI", sans-serif !important;
+        }}
         .stApp {{
             background: #FFFFFF;
         }}
@@ -353,32 +363,40 @@ def inject_css():
         }}
         [data-testid="stVerticalBlockBorderWrapper"] {{
             background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 16px;
-            box-shadow: 0 10px 28px rgba(15,23,42,.07);
+            box-shadow: 0 1px 2px rgba(15,23,42,.015);
         }}
         div.stButton > button {{
             background: #FFFFFF; color: #0F172A;
             border: 1px solid #CBD5E1; border-radius: 10px;
             padding: 0 16px; min-height: 40px; height: 40px;
             font-size: 12px; font-weight: 600; white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(15,23,42,.025);
         }}
         div.stButton > button:hover {{
             border-color: #1D4ED8; color: #1D4ED8; background: #E0F2FE;
             transform: translateY(-1px);
+            box-shadow: 0 1px 2px rgba(15,23,42,.035);
         }}
         button:focus-visible, a:focus-visible, input:focus-visible,
         [role="button"]:focus-visible, [role="option"]:focus-visible {{
             outline: 3px solid #3B82F6 !important; outline-offset: 2px !important;
         }}
         [data-testid="stPageLink"] a {{ min-height:44px; display:flex; align-items:center; }}
-        div.stButton > button[kind="primary"] {{
-            color: #fff; border-color: transparent;
-            background: #1D4ED8;
-            box-shadow: 0 8px 20px rgba(29,78,216,.22);
+        .stApp button[kind^="primary"] {{
+            color: #FFFFFF !important; border-color: #1D4ED8;
+            background: #1D4ED8 !important;
+            box-shadow: 0 1px 2px rgba(15,23,42,.03);
+        }}
+        .stApp button[kind^="primary"] *,
+        div.stDownloadButton > button *,
+        div.stFormSubmitButton > button * {{ color:#FFFFFF !important; }}
+        div.stFormSubmitButton > button {{
+            box-shadow: 0 1px 2px rgba(15,23,42,.03);
         }}
         [data-testid="stMetric"] {{
             background: #F4F6F9; border: 1px solid #CBD5E1;
             border-radius: 15px; padding: 13px 15px;
-            box-shadow: 0 6px 18px rgba(15,23,42,.05);
+            box-shadow: 0 1px 2px rgba(15,23,42,.015);
         }}
         [data-testid="stMetricValue"] {{ color: #0F172A; letter-spacing: -.03em; }}
         [data-testid="stDataFrame"] {{
@@ -402,11 +420,25 @@ def inject_css():
         }}
         [data-testid="stHeaderActionElements"] {{ display: none !important; }}
         [data-testid="stAlert"] {{ border-radius: 13px; border-width: 1px; }}
-        [data-testid="stProgress"] > div > div {{ background: linear-gradient(90deg,{ACCENT},{SERIES_1}); }}
+        [data-testid="stProgress"] [data-testid="stMarkdownContainer"] {{
+            background:none!important;
+        }}
+        [data-testid="stProgress"] [data-testid="stMarkdownContainer"] p {{
+            color:#0F172A!important;font-size:12px!important;font-weight:650!important;
+            line-height:1.35!important;margin:0 0 7px!important;
+        }}
+        [data-testid="stProgressBarTrack"] {{
+            background:#E2E8F0!important;background-image:none!important;
+            border-radius:999px!important;overflow:hidden!important;
+        }}
+        [data-testid="stProgressBarTrack"] > div {{
+            background:#1D4ED8!important;background-image:none!important;
+        }}
         div.stDownloadButton > button {{
             background: #1D4ED8; color: #FFFFFF; border: none; border-radius: 10px;
             min-height: 30px; height: 30px; font-size: 12px; font-weight: 700;
             white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(15,23,42,.03);
         }}
         div.stDownloadButton > button:hover {{ background: #1D4ED8; color: #FFFFFF; }}
         .card-title {{ font-size: 13px; font-weight: 700; color: #0F172A;
@@ -453,7 +485,7 @@ def inject_css():
         .page-head {{ display:flex; align-items:center; gap:14px; margin:0 0 22px; }}
         .page-icon {{ width:46px; height:46px; display:grid; place-items:center;
                       border-radius:14px; color:#1D4ED8;background:#E0F2FE;
-                      border:1px solid #BFDBFE;box-shadow:0 8px 20px rgba(59,130,246,.12); }}
+                      border:1px solid #BFDBFE;box-shadow:0 1px 2px rgba(59,130,246,.02); }}
         .page-icon svg {{ width:22px; height:22px; stroke:currentColor; fill:none;
                           stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }}
         .page-copy {{ min-width:0; }}
@@ -469,12 +501,12 @@ def inject_css():
         .fleet-sectionbar span {{ font-size:11px; color:#475569; text-align:right; }}
         .telemetry-shell {{ margin:2px 0 14px; padding:11px 14px 13px;
                             background:#F4F6F9;border:1px solid #CBD5E1;border-radius:14px;
-                            box-shadow:0 8px 22px rgba(15,23,42,.06); }}
+                            box-shadow:0 1px 2px rgba(15,23,42,.015); }}
         .telemetry-top {{ display:flex; justify-content:space-between; align-items:center;
                           color:{MUTED}; font-size:10px; letter-spacing:.45px; margin-bottom:9px; }}
         .telemetry-top b {{ color:#0F172A; font-size:10px; letter-spacing:1px; }}
         .live-pulse {{ display:inline-block; width:7px; height:7px; margin-right:7px;
-                       border-radius:50%; background:#10B981; box-shadow:0 0 0 4px #D1FAE5; }}
+                       border-radius:50%; background:#10B981; box-shadow:0 0 0 2px #D1FAE5; }}
         .telemetry-grid {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }}
         .telemetry-grid > div {{ padding:7px 10px; border-left:1px solid #CBD5E1; }}
         .telemetry-grid > div:first-child {{ border-left:0; }}
@@ -512,20 +544,10 @@ PAGE_ICONS = {
 
 
 def page_header(title: str, description: str, icon: str | None = "overview"):
-    """Consistent page heading using lightweight inline SVG, never emoji glyphs."""
-    if icon is None:
-        st.markdown(
-            f'<div class="page-head page-head-no-icon"><div class="page-copy">'
-            f'<div class="page-title">{escape(title)}</div>'
-            f'<div class="page-description">{escape(description)}</div></div></div>',
-            unsafe_allow_html=True,
-        )
-        return
-    paths = PAGE_ICONS.get(icon, PAGE_ICONS["overview"])
+    """Consistent text-only page heading; navigation already carries page icons."""
     st.markdown(
-        f'<div class="page-head"><div class="page-icon">'
-        f'<svg viewBox="0 0 24 24" aria-hidden="true">{paths}</svg></div>'
-        f'<div class="page-copy"><div class="page-title">{escape(title)}</div>'
+        f'<div class="page-head page-head-no-icon"><div class="page-copy">'
+        f'<div class="page-title">{escape(title)}</div>'
         f'<div class="page-description">{escape(description)}</div></div></div>',
         unsafe_allow_html=True,
     )
@@ -558,6 +580,11 @@ def sidebar_brand():
                 width:40px!important;min-width:40px!important;padding:0!important}}
             section[data-testid="stSidebar"] [data-testid="stTextInput"] {{
                 margin:6px 0 16px!important}}
+            section[data-testid="stSidebar"] [data-testid="stTextInput"] input {{
+                padding-left:38px!important;
+                background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")!important;
+                background-repeat:no-repeat!important;background-position:12px center!important;
+                background-size:18px 18px!important}}
             section[data-testid="stSidebar"] [data-testid="InputInstructions"] {{
                 display:none!important}}
             {'''section[data-testid="stSidebar"] [data-testid="stPageLink"] p {display:none!important}

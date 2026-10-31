@@ -29,6 +29,29 @@ page_header(
     "Incoming CDMs replayed in arrival order and scored as a live operations simulation.",
     "live",
 )
+st.markdown(
+    """<style>
+    .live-tier-zero {min-height:156px;padding:14px 16px;background:#F4F6F9;
+        border:1px solid #CBD5E1;border-radius:14px;display:grid;gap:8px;align-content:center}
+    .live-tier-zero-row {display:flex;align-items:center;justify-content:space-between;
+        padding:7px 10px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:9px;
+        color:#475569;font-size:12px}
+    .live-tier-zero-row span {display:flex;align-items:center;gap:8px}
+    .live-tier-dot {width:9px;height:9px;border-radius:999px;display:inline-block}
+    .live-tier-zero-row strong {color:#0F172A;font-size:13px}
+    .live-tier-zero-note {margin:2px 0 0;color:#475569;font-size:11px;text-align:center}
+    .st-key-live_current_tier_safe [data-testid="stMetric"] {
+        background:#D1FAE5!important;border-color:#10B981!important}
+    .st-key-live_current_tier_safe [data-testid="stMetric"] * {color:#047857!important}
+    .st-key-live_current_tier_elevated [data-testid="stMetric"] {
+        background:#FEF3C7!important;border-color:#F59E0B!important}
+    .st-key-live_current_tier_elevated [data-testid="stMetric"] * {color:#92400E!important}
+    .st-key-live_current_tier_critical [data-testid="stMetric"] {
+        background:#FEE2E2!important;border-color:#EF4444!important}
+    .st-key-live_current_tier_critical [data-testid="stMetric"] * {color:#B91C1C!important}
+    </style>""",
+    unsafe_allow_html=True,
+)
 
 TOTAL = int(query("SELECT count(*) n FROM cdms WHERE stream_seq IS NOT NULL")["n"].iat[0])
 
@@ -69,7 +92,7 @@ def live_panel():
     st.progress(min(ss.live_pos / TOTAL, 1.0),
                 text=f"{ss.live_pos:,} of {TOTAL:,} CDMs received")
 
-    left, right = st.columns([1, 1])
+    left, right = st.columns([1, 1], gap="large")
     with left:
         st.subheader("Incoming messages")
         if len(recv):
@@ -86,7 +109,7 @@ def live_panel():
                     "time_to_tca": "{:.2f}", "miss_distance": "{:,.0f}",
                     "predicted_risk": "{:.2f}",
                 }),
-                width="stretch", height=400, hide_index=True,
+                width="stretch", height=500, hide_index=True,
                 column_config={"stream_seq": "#", "time_to_tca": "TCA (d)",
                                "miss_distance": "miss (m)",
                                "predicted_risk": "log₁₀ Pc"},
@@ -108,6 +131,18 @@ def live_panel():
             fig.update_layout(**base_layout(height=220), bargap=0.35)
             fig.update_xaxes(gridcolor=GRID, title_text="events")
             st.plotly_chart(fig, width="stretch")
+        else:
+            st.markdown(
+                '<div class="live-tier-zero" role="status" aria-live="polite">'
+                '<div class="live-tier-zero-row"><span><i class="live-tier-dot" '
+                'style="background:#EF4444"></i>Critical</span><strong>0</strong></div>'
+                '<div class="live-tier-zero-row"><span><i class="live-tier-dot" '
+                'style="background:#F59E0B"></i>Elevated</span><strong>0</strong></div>'
+                '<div class="live-tier-zero-row"><span><i class="live-tier-dot" '
+                'style="background:#10B981"></i>Safe</span><strong>0</strong></div>'
+                '<p class="live-tier-zero-note">Waiting for the first incoming CDM</p></div>',
+                unsafe_allow_html=True,
+            )
         if not alerts.empty:
             st.subheader("Newest alerts")
             st.dataframe(
@@ -156,7 +191,8 @@ if pick is not None:
     m = TIER_META[current]
     cA, cB = st.columns([1, 2])
     with cA:
-        st.metric("Current tier", f"{m['glyph']} {current}")
+        with st.container(key=f"live_current_tier_{current.lower()}"):
+            st.metric("Current tier", f"{m['glyph']} {current}")
         st.metric("Latest log₁₀ Pc", f"{seen['predicted_risk'].iat[-1]:.2f}")
         st.metric("Miss distance", f"{seen['miss_distance'].iat[-1]:,.0f} m")
         escalations = [
