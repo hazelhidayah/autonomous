@@ -62,6 +62,20 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/streamlit run app/Overview.py  # the console (first run builds data/ops.db)
 ```
 
+## Public Streamlit deployment
+
+The app can be deployed from this repository with
+[Streamlit Community Cloud](https://share.streamlit.io/):
+
+1. Sign in with GitHub and select `hazelhidayah/autonomous`.
+2. Set the branch to `main`.
+3. Set the main file to `app/Overview.py`.
+4. Click **Deploy**.
+
+The deployed app will receive a public `streamlit.app` URL. The checked-in
+`data/ops.db` supplies the demo runtime data, so the cloud deployment does not
+need the original challenge dataset.
+
 ## Design decisions
 
 - **Labels** (`src/config.py`): Critical = risk ≥ −4 **or** miss < 1 km; Elevated = risk ≥ −6
