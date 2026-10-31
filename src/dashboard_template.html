@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conjunction Risk Dashboard — AI Collision Avoidance</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --ink-1: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6;
+    --good: #0ca30c;
+    --warning: #fab219;
+    --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --ink-1: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body.viz-root {
+    margin: 0; background: var(--page); color: var(--ink-1);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.45;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px 20px 48px; }
+  header h1 { font-size: 20px; margin: 0 0 2px; }
+  header p { color: var(--ink-2); margin: 0 0 20px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .tile .label { color: var(--ink-2); font-size: 12px; }
+  .tile .value { font-size: 30px; font-weight: 650; margin-top: 2px; }
+  .tile .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .tile.crit .value::before { content: "▲ "; color: var(--critical); font-size: 20px; }
+  .tile.warn .value::before { content: "◆ "; color: var(--warning); font-size: 20px; }
+  .tile.good .value::before { content: "● "; color: var(--good); font-size: 20px; }
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 15px; margin: 0 0 4px; }
+  .card .note { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
+  ul.insights { margin: 6px 0 0; padding-left: 20px; }
+  ul.insights li { margin-bottom: 6px; color: var(--ink-1); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th { text-align: left; color: var(--ink-2); font-weight: 600; font-size: 12px;
+       border-bottom: 1px solid var(--baseline); padding: 6px 10px; }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--grid); }
+  td.num, th.num { text-align: right; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+          padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border); }
+  .chip .dot { font-size: 11px; }
+  .chip.Critical .dot { color: var(--critical); }
+  .chip.Elevated .dot { color: var(--warning); }
+  .chip.Safe .dot { color: var(--good); }
+  footer { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .plot { width: 100%; }
+</style>
+</head>
+<body class="viz-root">
+<div class="wrap">
+  <header>
+    <h1>Conjunction Risk Dashboard</h1>
+    <p>AI-driven collision avoidance — every event scored from its latest conjunction data message.
+       Tiers: <strong>▲ Critical</strong> (log₁₀ Pc ≥ −4 or miss &lt; 1 km),
+       <strong>◆ Elevated</strong> (≥ −6 or miss ≤ 5 km), <strong>● Safe</strong> otherwise.</p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Auto-generated insights</h2>
+    <ul class="insights" id="insights"></ul>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Miss distance vs collision probability</h2>
+      <p class="note">Latest CDM per event; log–log. Dashed lines mark the tier thresholds. Safe events downsampled to 3,000 for legibility — full values are in the risk table and predictions CSV.</p>
+      <div id="scatter" class="plot" style="height:460px"></div>
+    </div>
+    <div class="card">
+      <h2>Relative geometry of the riskiest close approaches</h2>
+      <p class="note">40 highest-risk events within 8 km: chaser position relative to the satellite in the radial / along-track / cross-track frame. Wire spheres: 1 km and 5 km zones.</p>
+      <div id="three" class="plot" style="height:460px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Highest-risk events</h2>
+    <p class="note">Top 30 by predicted log₁₀ Pc, latest CDM per event.</p>
+    <div style="overflow-x:auto"><table id="risktable"></table></div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+
+const TIER_META = {
+  Critical: { color: "#d03b3b", symbol: "triangle-up", sym3d: "x",       glyph: "▲" },
+  Elevated: { color: "#fab219", symbol: "diamond",     sym3d: "diamond", glyph: "◆" },
+  Safe:     { color: "#0ca30c", symbol: "circle",      sym3d: "circle",  glyph: "●" },
+};
+const ORDER = ["Critical", "Elevated", "Safe"];
+
+function tokens() {
+  const s = getComputedStyle(document.body);
+  const v = (n) => s.getPropertyValue(n).trim();
+  return { surface: v("--surface-1"), ink1: v("--ink-1"), ink2: v("--ink-2"),
+           muted: v("--muted"), grid: v("--grid"), baseline: v("--baseline") };
+}
+
+function baseLayout(t) {
+  return {
+    paper_bgcolor: t.surface, plot_bgcolor: t.surface,
+    font: { family: 'system-ui, -apple-system, "Segoe UI", sans-serif', color: t.ink2, size: 12 },
+    margin: { l: 60, r: 16, t: 8, b: 48 },
+    legend: { orientation: "h", y: -0.16, font: { color: t.ink2 } },
+  };
+}
+
+// ---- stat tiles / 24-h warning panel ----
+(function () {
+  const p = DATA.panel, h = DATA.headline;
+  const by = p.soon_by_tier;
+  const tiles = [
+    { label: "Conjunctions in next 24 h", value: p.soon_total,
+      sub: `${p.soon_inside_1km} inside 1 km · ${p.soon_inside_5km} inside 5 km`, cls: "" },
+    { label: "Critical (next 24 h)", value: by.Critical || 0, sub: "manoeuvre review required", cls: "crit" },
+    { label: "Elevated (next 24 h)", value: by.Elevated || 0, sub: "monitor closely", cls: "warn" },
+    { label: "Safe (next 24 h)", value: by.Safe || 0, sub: "routine monitoring", cls: "good" },
+    { label: "Critical recall (CV)", value: (h.critical_recall * 100).toFixed(1) + "%",
+      sub: `test: ${(h.test_critical_recall * 100).toFixed(1)}% · ${h.strategy}`, cls: "" },
+  ];
+  document.getElementById("tiles").innerHTML = tiles.map(t =>
+    `<div class="tile ${t.cls}"><div class="label">${t.label}</div>
+     <div class="value">${t.value}</div><div class="sub">${t.sub}</div></div>`).join("");
+  document.getElementById("insights").innerHTML =
+    DATA.insights.map(i => `<li>${i}</li>`).join("");
+  document.getElementById("foot").textContent =
+    `Model: gradient-boosted trees, grouped 5-fold CV by event. Risk regression MAE ` +
+    `${h.reg_mae.toFixed(2)} (log₁₀ Pc) · macro F1 ${h.macro_f1.toFixed(2)} · ` +
+    `Critical precision ${(h.critical_precision * 100).toFixed(0)}%. ` +
+    `Dataset: ESA Kelvins Collision Avoidance Challenge.`;
+})();
+
+// ---- risk table ----
+(function () {
+  const head = `<tr><th>Event</th><th>Set</th><th class="num">TCA (days)</th>
+    <th class="num">Miss (km)</th><th class="num">log₁₀ Pc (pred)</th>
+    <th class="num">P(critical)</th><th>Tier</th><th>Chaser type</th></tr>`;
+  const rows = DATA.table.map(r => {
+    const m = TIER_META[r.predicted_tier];
+    return `<tr><td>${r.event_id}</td><td>${r.split}</td>
+      <td class="num">${r.time_to_tca.toFixed(2)}</td>
+      <td class="num">${(r.miss_distance / 1000).toFixed(2)}</td>
+      <td class="num">${r.predicted_risk.toFixed(2)}</td>
+      <td class="num">${r.p_critical.toFixed(3)}</td>
+      <td><span class="chip ${r.predicted_tier}"><span class="dot">${m.glyph}</span>${r.predicted_tier}</span></td>
+      <td>${r.c_object_type}</td></tr>`;
+  }).join("");
+  document.getElementById("risktable").innerHTML = head + rows;
+})();
+
+// ---- miss distance vs Pc scatter ----
+function drawScatter() {
+  const t = tokens();
+  const traces = ORDER.filter(k => DATA.scatter[k]).map(k => {
+    const d = DATA.scatter[k], m = TIER_META[k];
+    return {
+      type: "scattergl", mode: "markers", name: `${m.glyph} ${k}`,
+      x: d.x, y: d.y,
+      customdata: d.event.map((e, i) => [e, d.tca[i]]),
+      hovertemplate: "event %{customdata[0]}<br>miss %{x:.0f} m · Pc %{y:.1e}" +
+        "<br>TCA in %{customdata[1]} d<extra>" + k + "</extra>",
+      marker: { color: m.color, symbol: m.symbol, size: 6, opacity: 0.55,
+                line: { width: 1, color: t.surface } },
+    };
+  });
+  const th = DATA.thresholds;
+  const layout = Object.assign(baseLayout(t), {
+    xaxis: { type: "log", title: { text: "miss distance (m)" }, gridcolor: t.grid,
+             zeroline: false, linecolor: t.baseline, tickcolor: t.baseline },
+    yaxis: { type: "log", title: { text: "predicted collision probability" }, gridcolor: t.grid,
+             zeroline: false, linecolor: t.baseline, tickcolor: t.baseline,
+             exponentformat: "power", range: [-12, 0] },
+    showlegend: true,
+    shapes: [
+      { type: "line", x0: th.miss_crit, x1: th.miss_crit, yref: "paper", y0: 0, y1: 1,
+        line: { color: t.muted, width: 1, dash: "dash" } },
+      { type: "line", x0: th.miss_elev, x1: th.miss_elev, yref: "paper", y0: 0, y1: 1,
+        line: { color: t.muted, width: 1, dash: "dash" } },
+      { type: "line", xref: "paper", x0: 0, x1: 1, y0: th.pc_crit, y1: th.pc_crit,
+        line: { color: t.muted, width: 1, dash: "dash" } },
+      { type: "line", xref: "paper", x0: 0, x1: 1, y0: th.pc_elev, y1: th.pc_elev,
+        line: { color: t.muted, width: 1, dash: "dash" } },
+    ],
+    annotations: [
+      { x: Math.log10(th.miss_crit), y: 1, yref: "paper", text: "1 km", showarrow: false,
+        font: { color: t.muted, size: 11 }, xanchor: "left", yanchor: "top" },
+      { x: Math.log10(th.miss_elev), y: 1, yref: "paper", text: "5 km", showarrow: false,
+        font: { color: t.muted, size: 11 }, xanchor: "left", yanchor: "top" },
+      { xref: "paper", x: 0, y: Math.log10(th.pc_crit), text: "Pc 10⁻⁴", showarrow: false,
+        font: { color: t.muted, size: 11 }, xanchor: "left", yanchor: "bottom" },
+      { xref: "paper", x: 0, y: Math.log10(th.pc_elev), text: "Pc 10⁻⁶", showarrow: false,
+        font: { color: t.muted, size: 11 }, xanchor: "left", yanchor: "bottom" },
+    ],
+  });
+  Plotly.react("scatter", traces, layout, { displayModeBar: false, responsive: true });
+}
+
+// ---- 3D relative geometry ----
+function sphere(radius, t) {
+  const lines = [];
+  const N = 24;
+  for (const lat of [-60, -30, 0, 30, 60]) {
+    const x = [], y = [], z = [];
+    for (let i = 0; i <= N; i++) {
+      const lon = (i / N) * 2 * Math.PI, la = (lat * Math.PI) / 180;
+      x.push(radius * Math.cos(la) * Math.cos(lon));
+      y.push(radius * Math.cos(la) * Math.sin(lon));
+      z.push(radius * Math.sin(la));
+    }
+    lines.push({ x, y, z });
+  }
+  for (let m = 0; m < 4; m++) {
+    const x = [], y = [], z = [];
+    for (let i = 0; i <= N; i++) {
+      const la = -Math.PI / 2 + (i / N) * Math.PI, lon = (m / 4) * Math.PI;
+      x.push(radius * Math.cos(la) * Math.cos(lon));
+      y.push(radius * Math.cos(la) * Math.sin(lon));
+      z.push(radius * Math.sin(la));
+    }
+    lines.push({ x, y, z });
+  }
+  return lines.map((l, i) => ({
+    type: "scatter3d", mode: "lines", x: l.x, y: l.y, z: l.z,
+    line: { color: t.grid, width: 1.5 }, hoverinfo: "skip",
+    showlegend: i === 0, name: `${radius / 1000} km zone`, opacity: 0.6,
+  }));
+}
+
+function draw3d() {
+  const t = tokens();
+  const traces = [];
+  traces.push(...sphere(1000, t), ...sphere(5000, t));
+  for (const k of ORDER) {
+    if (!DATA.three_d[k]) continue;
+    const d = DATA.three_d[k], m = TIER_META[k];
+    traces.push({
+      type: "scatter3d", mode: "markers", name: `${m.glyph} ${k}`,
+      x: d.r, y: d.t, z: d.n,
+      customdata: d.event.map((e, i) => [e, d.risk[i]]),
+      hovertemplate: "event %{customdata[0]}<br>R %{x:.0f} · T %{y:.0f} · N %{z:.0f} m" +
+        "<br>log₁₀ Pc %{customdata[1]}<extra>" + k + "</extra>",
+      marker: { color: m.color, symbol: m.sym3d, size: 3.5, opacity: 0.9,
+                line: { width: 1, color: t.surface } },
+    });
+  }
+  traces.push({
+    type: "scatter3d", mode: "markers", name: "satellite", x: [0], y: [0], z: [0],
+    marker: { color: t.ink1, size: 7, symbol: "diamond" }, hovertemplate: "satellite<extra></extra>",
+  });
+  const ax = (title) => ({
+    title: { text: title }, color: t.ink2, gridcolor: t.grid, zerolinecolor: t.baseline,
+    backgroundcolor: t.surface, showbackground: true, range: [-8000, 8000],
+  });
+  const layout = Object.assign(baseLayout(t), {
+    scene: { xaxis: ax("radial (m)"), yaxis: ax("along-track (m)"), zaxis: ax("cross-track (m)"),
+             aspectmode: "cube", camera: { eye: { x: 1.4, y: 1.4, z: 0.9 } } },
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+  });
+  Plotly.react("three", traces, layout, { displayModeBar: false, responsive: true });
+}
+
+function drawAll() { drawScatter(); draw3d(); }
+drawAll();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+</script>
+</body>
+</html>
