@@ -36,6 +36,46 @@ st.markdown(
     .fleet-brand span {color:#3B82F6}
     .fleet-path {font-size:18px;font-weight:700;color:#0F172A;white-space:nowrap}
     .fleet-path small {font-size:11px;color:#475569;font-weight:500;margin-left:8px}
+    [data-testid="stHorizontalBlock"]:has(.fleet-path) {
+        align-items:center !important; row-gap:16px !important;
+        container-type:inline-size;
+    }
+    [data-testid="stHorizontalBlock"]:has(.fleet-path) > [data-testid="stColumn"] {
+        min-width:0 !important;
+    }
+    [data-testid="stHorizontalBlock"]:has(.fleet-path)
+    [data-testid="stSelectbox"] [role="combobox"] {
+        min-width:0 !important;
+    }
+    [data-testid="stHorizontalBlock"]:has(.fleet-path)
+    [data-testid="stButtonGroup"] [role="radiogroup"] {
+        flex-wrap:wrap !important; height:auto !important; overflow:visible !important;
+    }
+    [data-testid="stHorizontalBlock"]:has(.fleet-path)
+    [data-testid="stButtonGroup"] {height:auto !important}
+    @container (max-width:800px) {
+        [data-testid="stHorizontalBlock"]:has(.fleet-path) > [data-testid="stColumn"] {
+            flex:1 1 100% !important; max-width:100% !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(.fleet-path)
+        > [data-testid="stColumn"]:nth-child(3) {
+            flex-basis:70% !important; max-width:70% !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(.fleet-path)
+        > [data-testid="stColumn"]:nth-child(4) {
+            flex-basis:30% !important; max-width:30% !important;
+        }
+    }
+    @container (max-width:500px) {
+        .fleet-path {white-space:normal; line-height:1.25}
+        .fleet-path small {display:block; margin:3px 0 0}
+        [data-testid="stHorizontalBlock"]:has(.fleet-path)
+        > [data-testid="stColumn"]:nth-child(3),
+        [data-testid="stHorizontalBlock"]:has(.fleet-path)
+        > [data-testid="stColumn"]:nth-child(4) {
+            flex-basis:100% !important; max-width:100% !important;
+        }
+    }
     .fleet-sectionbar {display:flex;align-items:center;justify-content:space-between;
         padding:9px 2px 5px;border-bottom:1px solid #CBD5E1;margin-bottom:10px}
     .fleet-sectionbar strong {font-size:13px;color:#0F172A}
@@ -143,7 +183,7 @@ sat = st.session_state.selected_satellite
 st.markdown('<div class="fleet-topbar">', unsafe_allow_html=True)
 with st.container(border=True):
     title_col, view_col, focus_col, live_col = st.columns(
-        [2.0, 2.5, 2.5, 1.1], vertical_alignment="center")
+        [2.3, 4.4, 2.5, 1.1], vertical_alignment="center")
     title_col.markdown('<div class="fleet-path">Fleet analysis <small>live operations</small></div>',
                        unsafe_allow_html=True)
     with view_col:

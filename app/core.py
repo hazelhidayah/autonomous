@@ -560,9 +560,9 @@ def sidebar_brand():
     with st.sidebar:
         st.markdown(
             f"""<style>
-            section[data-testid="stSidebar"] {{width:{width}px !important;min-width:{width}px !important;
+            body section[data-testid="stSidebar"] {{width:{width}px !important;min-width:{width}px !important;
                 max-width:{width}px !important;overflow:hidden !important}}
-            section[data-testid="stSidebar"] > div:first-child {{width:{width}px !important}}
+            body section[data-testid="stSidebar"] > div:first-child {{width:{width}px !important}}
             section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{padding-top:18px!important}}
             section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{
                 margin-top:-76px!important;padding-top:0!important}}
